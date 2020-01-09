@@ -1,0 +1,633 @@
+=head1 NAME
+
+virt-top - 'top'-like utility for virtualization stats
+
+=head1 SUMMARY
+
+virt-top [-options]
+
+=head1 DESCRIPTION
+
+virt-top is a L<top(1)>-like utility for showing stats of virtualized
+domains.  Many keys and command line options are the same as for
+ordinary I<top>.
+
+It uses libvirt so it is capable of showing stats across a variety of
+different virtualization systems.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-1>
+
+Display physical CPUs by default (instead of domains).
+
+Under each domain column, two numbers are shown.  The first is
+the percentage of the physical CPU used by the domain and the
+hypervisor together.  The second is the percentage used by just
+the domain.
+
+When virt-top is running, use the I<1> key to toggle
+between physical CPUs and domains display.
+
+=item B<-2>
+
+Display network interfaces by default (instead of domains).
+When virt-top is running, use the I<2> key to toggle
+between network interfaces and domains display.
+
+=item B<-3>
+
+Display block devices (virtual disks) by default (instead of domains).
+When virt-top is running, use the I<3> key to toggle
+between block devices and domains display.
+
+=item B<-b>
+
+Batch mode.  In this mode keypresses are ignored.
+
+=item B<-c uri> or B<--connect uri>
+
+Connect to the libvirt URI given.
+
+To connect to QEMU/KVM you would normally do I<-c qemu:///system>
+
+To connect to Xen on the same host, do I<-c xen:///>
+
+To connect to libvirtd on a remote machine you would normally do
+I<-c qemu://host/system>
+
+If this option is not given then virt-top connects by default
+to whatever is the default hypervisor for libvirt, although
+this can be overridden by setting environment variables.
+
+See the libvirt documentation at L<http://libvirt.org/uri.html>
+for further information.
+
+=item B<-d delay>
+
+Set the delay between screen updates in seconds.
+The default is 3.0 seconds.  You can change this
+while virt-top is running by pressing either I<s> or I<d> key.
+
+=item B<-n iterations>
+
+Set the number of iterations to run.  The default
+is to run continuously.
+
+=item B<-o sort>
+
+Set the sort order to one of:
+B<cpu> (sort by %CPU used),
+B<mem> (sort by total memory),
+B<time> (sort by total time),
+B<id> (sort by domain ID),
+B<name> (sort by domain name),
+B<netrx> (sort by network received bytes),
+B<nettx> (sort by network transmitted bytes),
+B<blockrdrq> (sort by block device [disk] read requests),
+B<blockwrrq> (sort by block device [disk] write requests).
+
+While virt-top is running you can change the sort
+order using keys I<P> (cpu), I<M> (memory),
+I<T> (total time), I<N> (domain ID),
+I<F> (interactively select the sort field).
+
+=item B<-s>
+
+Secure mode.  Currently this does nothing.
+
+=item B<--hist-cpu secs>
+
+Set the time in seconds between updates of the historical
+%CPU at the top right of the display.
+
+=item B<--csv file.csv>
+
+Write the statistics to file I<file.csv>.  First a header is written
+showing the statistics being recorded in each column, then one line is
+written for each screen update.  The CSV file can be loaded directly
+by most spreadsheet programs.
+
+Currently the statistics which this records vary between releases of
+virt-top (but the column headers will stay the same, so you can use
+those to process the CSV file).
+
+Not every version of virt-top supports CSV output - it depends how the
+program was compiled (see I<README> file in the source distribution
+for details).
+
+To save space you can compress your CSV files (if your shell supports
+this feature, eg. I<bash>):
+
+ virt-top --csv >(gzip -9 > output.csv.gz)
+
+You can use a similar trick to split the CSV file up.  In this example
+the CSV file is split every 1000 lines into files called
+I<output.csv.00>, I<output.csv.01> etc.
+
+ virt-top --csv >(split -d -l 1000 - output.csv.)
+
+=item B<--no-csv-cpu>
+
+Disable domain CPU stats in CSV output.
+
+=item B<--no-csv-mem>
+
+Disable domain memory stats in CSV output.
+
+=item B<--no-csv-block>
+
+Disable domain block device stats in CSV output.
+
+=item B<--no-csv-net>
+
+Disable domain network interface stats in CSV output.
+
+=item B<--debug filename>
+
+Send debug and error messages to I<filename>.
+To send error messages to syslog you can do:
+
+ virt-top --debug >(logger -t virt-top)
+
+See also REPORTING BUGS below.
+
+=item B<--init-file filename>
+
+Read I<filename> as the init file instead of the default which is
+I<$HOME/.virt-toprc>.  See also INIT FILE below.
+
+=item B<--no-init-file>
+
+Do not read any init file.
+
+=item B<--script>
+
+Script mode.  There will be no user interface.  This is most useful
+when used together with the I<--csv> and I<-n> options.
+
+=item B<--stream>
+
+Stream mode.  All output is sent to stdout.  This can be used from
+shell scripts etc.  There is no user interface.
+
+=item B<--block-in-bytes>
+
+Show I/O statistics in Bytes. Default is shown in the number of Requests.
+
+=item B<--end-time time>
+
+The program will exit at the I<time> given.
+
+The time may be given in one of the following formats:
+
+=over 4
+
+=item I<YYYY-MM-DD HH:MM:SS>
+
+End time is the date and time given.
+
+=item I<HH:MM:SS>
+
+End time is the time given, today.
+
+=item I<+HH:MM:SS>
+
+End time is HH hours, MM minutes, SS seconds in the future (counted
+from the moment that program starts).
+
+=item I<+secs>
+
+End time is I<secs> seconds in the future.
+
+=back
+
+For example to run the program for 3 minutes you could do:
+
+ virt-top --end-time +00:03:00
+
+or:
+
+ virt-top --end-time +180
+
+Not every version of virt-top supports this option - it depends how the
+program was compiled (see I<README> file in the source distribution
+for details).
+
+=item B<--help>
+
+Display usage summary.
+
+=item B<--version>
+
+Display version number and exit.
+
+=back
+
+=head1 KEYS
+
+Note that keys are case sensitive.  For example use upper-case I<P>
+(shift P) to sort by %CPU.  I<^> before a key means a Ctrl key, so
+I<^L> is Ctrl L.
+
+=over 4
+
+=item I<space> or I<^L>
+
+Updates the display.
+
+=item I<q>
+
+Quits the program.
+
+=item I<h>
+
+Displays help.
+
+=item I<s> or I<d>
+
+Change the delay between screen updates.
+
+=item I<B>
+
+Toggle Block I/O statistics so they are shown in either bytes or requests.
+
+=item I<0> (number 0)
+
+Show the normal list of domains display.
+
+=item I<1> (number 1)
+
+Toggle into showing physical CPUs.  If pressed
+again toggles back to showing domains (the normal
+display).
+
+=item I<2>
+
+Toggle into showing network interfaces.  If pressed
+again toggles back to showing domains.
+
+=item I<3>
+
+Toggle into showing block devices (virtual disks).  If pressed again
+toggles back to showing domains.
+
+=item I<P>
+
+Sort by %CPU.
+
+=item I<M>
+
+Sort by total memory.  Note that this shows the total memory
+allocated to the guest, not the memory being used.
+
+=item I<T>
+
+Sort by total time.
+
+=item I<N>
+
+Sort by domain ID.
+
+=item I<F>
+
+Select the sort field interactively (there are other
+sort fields you can choose using this key).
+
+=item I<W>
+
+This creates or overwrites the init file with the current settings.
+
+This key is disabled if I<--no-init-file> was specified on the
+command line or if I<overwrite-init-file false> is given in
+the init file.
+
+=back
+
+=head1 INIT FILE
+
+When virt-top starts up, it reads initial settings from the
+file I<.virt-toprc> in the user's home directory.
+
+The name of this file may be overridden using the I<--init-file
+filename> command line option or may be disabled entirely using
+I<--no-init-file>.
+
+The init file has a simple format.  Blank lines and comments
+beginning with I<#> are ignored.  Everything else is a set of
+I<key value> pairs, described below.
+
+=over 4
+
+=item B<display> I<task|pcpu|block|net>
+
+Sets the major display mode to one of I<task> (tasks, the
+default), I<pcpu> (physical CPUs), I<block> (block devices),
+or I<net> (network interfaces).
+
+=item B<delay> I<secs>
+
+Sets the delay between display updates in seconds.
+
+=item B<hist-cpu> I<secs>
+
+Sets the historical CPU delay in seconds.
+
+=item B<iterations> I<n>
+
+Sets the number of iterations to run before we exit.  Setting
+this to I<-1> means to run continuously.
+
+=item B<sort> I<cpu|mem|time|id|name|...>
+
+Sets the sort order.  The option names are the same as for
+the command line I<-o> option.
+
+=item B<connect> I<uri>
+
+Sets the default connection URI.
+
+=item B<debug> I<filename>
+
+Sets the default filename to use for debug and error messages.
+
+=item B<csv> I<filename>
+
+Enables CSV output to the named file.
+
+=item B<csv-cpu> I<true|false>
+
+Enable or disable domain CPU stats in CSV output.
+
+=item B<csv-mem> I<true|false>
+
+Enable or disable domain memory stats in CSV output.
+
+=item B<csv-block> I<true|false>
+
+Enable or disable domain block device stats in CSV output.
+
+=item B<csv-net> I<true|false>
+
+Enable or disable domain network interface stats in CSV output.
+
+=item B<batch> I<true|false>
+
+Sets batch mode.
+
+=item B<secure> I<true|false>
+
+Sets secure mode.
+
+=item B<script> I<true|false>
+
+Sets script mode.
+
+=item B<stream> I<true|false>
+
+Sets stream mode.
+
+=item B<block-in-bytes> I<true|false>
+
+Show block device statistics in bytes.
+
+=item B<end-time> I<time>
+
+Set the time at which the program exits.  See above for the
+time formats supported.
+
+=item B<overwrite-init-file> I<false>
+
+If set to I<false> then the I<W> key will not overwrite the
+init file.
+
+=back
+
+Note that in the current implementation, options specified in
+the init file override options specified on the command line.
+This is a bug and this behaviour may change in the future.
+
+=head1 COLUMN HEADINGS
+
+=over 4
+
+=item B<%CPU>
+
+Percentage of CPU used.  As with L<top(1)>, 100% means that
+all physical CPUs are being fully used.
+
+=item B<DEVICE>
+
+The block device name.
+
+=item B<DOMAIN>
+
+=item B<NAME>
+
+The name of the libvirt domain.
+
+=item B<ID>
+
+The libvirt domain ID.
+
+=item B<INTERFACE>
+
+The network interface name.
+
+=item B<%MEM>
+
+The percentage of host memory assigned to the guest.
+
+=item B<PHYCPU>
+
+The physical CPU.
+
+=item B<RDBY>
+
+Disk bytes read since last displayed.
+
+=item B<RDRQ>
+
+Disk read requests since last displayed.
+
+=item B<RXBY>
+
+Network bytes received since last displayed.
+
+=item B<RXPK>
+
+Network packets received since last displayed.
+
+=item B<S>
+
+The state of the domain, one of:
+
+=over 4
+
+=item B<?>
+
+Unknown.
+
+=item B<R>
+
+Running.
+
+=item B<S>
+
+Blocked.
+
+=item B<P>
+
+Paused.
+
+=item B<D>
+
+=item B<O>
+
+Shutdown.
+
+=item B<X>
+
+Crashed.
+
+=back
+
+=item B<TIME>
+
+Total CPU time used.
+
+=item B<TXBY>
+
+Network bytes transmitted since last displayed.
+
+=item B<TXPK>
+
+Network packets transmitted since last displayed.
+
+=item B<WRBY>
+
+Disk bytes written since last displayed.
+
+=item B<WRRQ>
+
+Disk write requests since last displayed.
+
+=back
+
+=head1 NOTES
+
+=head2 Block I/O statistics
+
+This I/O value is the amount of I/O since the previous iteration
+of virt-top. To calculate speed of I/O, you should divide
+the number by delay secs.
+
+=head2 NETWORK RX BYTES AND PACKETS
+
+Libvirt/virt-top has no way to know that a packet transmitted to a
+guest was received (eg. if the guest is not listening).  In the
+network RX stats, virt-top reports the packets transmitted to the
+guest, on the basis that the guest might receive them.
+
+In particular this includes broadcast packets.  Because of the way
+that Linux bridges work, if the guest is connected to a bridge, it
+will probably see a steady "background noise" of RX packets even when
+the network interface is idle or down.  These are caused by STP
+packets generated by the bridge.
+
+=head2 DEBUGGING LIBVIRT ISSUES
+
+virt-top tries to turn libvirt errors into informative messages.
+However if libvirt initialization fails then this is not possible.
+Instead you will get an obscure error like:
+
+ libvir: error : Unknown failure
+ Fatal error: exception Libvirt.Virterror(...)
+
+To see the cause of libvirt errors in more detail, enable libvirt
+debugging by setting this environment variable:
+
+ export LIBVIRT_DEBUG=1
+
+=head1 SEE ALSO
+
+L<top(1)>,
+L<virsh(1)>,
+L<http://www.libvirt.org/ocaml/>,
+L<http://www.libvirt.org/>,
+L<http://people.redhat.com/~rjones/>,
+L<http://caml.inria.fr/>
+
+=head1 AUTHORS
+
+Richard W.M. Jones <rjones @ redhat . com>
+
+=head1 COPYRIGHT
+
+(C) Copyright 2007-2012 Red Hat Inc., Richard W.M. Jones
+http://libvirt.org/
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+=head1 REPORTING BUGS
+
+Bugs can be viewed on the Red Hat Bugzilla page:
+L<https://bugzilla.redhat.com/>.
+
+If you find a bug in virt-top, please follow these steps to report it:
+
+=over 4
+
+=item 1. Check for existing bug reports
+
+Go to L<https://bugzilla.redhat.com/> and search for similar bugs.
+Someone may already have reported the same bug, and they may even
+have fixed it.
+
+=item 2. Capture debug and error messages
+
+Run
+
+ virt-top --debug virt-top.log
+
+and keep I<virt-top.log>.  It contains error messages which you
+should submit with your bug report.
+
+=item 3. Get version of virt-top and version of libvirt.
+
+Use:
+
+ virt-top --version
+
+If you can get the precise version of libvirt you are using
+then that too is helpful.
+
+=item 4. Submit a bug report.
+
+Go to L<https://bugzilla.redhat.com/> and enter a new bug.
+Please describe the problem in as much detail as possible.
+
+Remember to include the version numbers (step 3) and the debug
+messages file (step 2).
+
+=item 5. Assign the bug to rjones @ redhat.com
+
+Assign or reassign the bug to B<rjones @ redhat.com> (without the
+spaces).  You can also send me an email with the bug number if you
+want a faster response.
+
+=back
