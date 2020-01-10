@@ -3,7 +3,7 @@
 
 Name:           virt-top
 Version:        1.0.4
-Release:        3.13%{?dist}
+Release:        3.15%{?dist}
 Summary:        Utility like top(1) for displaying virtualization stats
 
 Group:          Development/Libraries
@@ -13,6 +13,7 @@ Source0:        http://et.redhat.com/~rjones/virt-top/files/%{name}-%{version}.t
 
 # Post-process output of CSV file (RHBZ#665817).
 Source1:        processcsv.py
+Source2:        processcsv.py.pod
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 ExcludeArch:    sparc64 s390 s390x
@@ -38,6 +39,13 @@ Patch16:        virt-top-1.0.4-add-memory-stats-to-csv-mode.patch
 Patch17:        virt-top-1.0.4-processcsv-documentation.patch
 Patch18:        virt-top-1.0.4-Fix-ordering-of-csv_mode-and-stream_mode-in-tuple.patch
 Patch19:        virt-top-1.0.4-fix-virt-top-1.patch
+Patch20:        virt-top-1.0.4-man-page-Update-copyright-date-and-link-to-web-pages.patch
+Patch21:        virt-top-1.0.4-man-page-Update-copyright-date.patch
+Patch22:        virt-top-1.0.4-Man-page-Add-an-explanation-of-columns-RHBZ-834208.patch
+Patch23:        virt-top-1.0.4-Add-missing-sort-order-options-in-help-output-RHBZ-8.patch
+Patch24:        virt-top-1.0.4-Better-error-messages-when-parsing-the-init-file-RHB.patch
+Patch25:        virt-top-1.0.4-Rename-find_usages_from_stats-as-find_cpu_usages.patch
+Patch26:        virt-top-1.0.4-show-vcpu-usages-by-virt-top-1.patch
 
 
 BuildRequires:  ocaml >= 3.11.0
@@ -98,6 +106,13 @@ different virtualization systems.
 %patch17 -p1
 %patch18 -p1
 %patch19 -p1
+%patch20 -p1
+%patch21 -p1
+%patch22 -p1
+%patch23 -p1
+%patch24 -p1
+%patch25 -p1
+%patch26 -p1
 chmod -x COPYING
 
 
@@ -115,6 +130,10 @@ make -C po
 # Force rebuild of man page.
 rm virt-top/virt-top.1
 make -C virt-top virt-top.1
+
+# Build processcsv.py.1.
+pod2man -c "Virtualization Support" --release "%{name}-%{version}" \
+  %{SOURCE2} > processcsv.py.1
 
 
 %install
@@ -140,9 +159,9 @@ execstack -c $RPM_BUILD_ROOT%{_bindir}/virt-top
 
 # Install processcsv.py.
 install -m 0755 %{SOURCE1} $RPM_BUILD_ROOT%{_bindir}
-pushd $RPM_BUILD_ROOT%{_mandir}/man1
-ln virt-top.1 processcsv.py.1
-popd
+
+# Install processcsv.py(1).
+install -m 0644 processcsv.py.1 $RPM_BUILD_ROOT%{_mandir}/man1/
 
 
 %clean
@@ -159,6 +178,22 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri Oct 12 2012 Richard W.M. Jones <rjones@redhat.com> - 1.0.4-3.15
+- Split out hypervisor + domain pCPU usage from domain-only pCPU usage.
+  resolves: rhbz#841759
+
+* Fri Sep 28 2012 Richard W.M. Jones <rjones@redhat.com> - 1.0.4-3.14
+- Fix the copyright date and a link in the man page.
+  resolves: rhbz#825627
+- Add an explanation of columns.
+  resolves: rhbz#834208
+- Add missing sort order options in help output.
+  resolves: rhbz#807176
+- Better error messages when parsing the init file.
+  resolves: rhbz#836231
+- Write and install a specific man page for processcsv.py.
+  resolves: rhbz#835547
+
 * Fri Mar 23 2012 Richard W.M. Jones <rjones@redhat.com> - 1.0.4-3.13
 - Rebuild against fixed virDomainGetCPUStats binding in ocaml-libvirt.
   resolves: RHBZ#737728

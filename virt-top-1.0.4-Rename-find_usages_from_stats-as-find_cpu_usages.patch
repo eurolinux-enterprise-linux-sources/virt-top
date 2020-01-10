@@ -1,0 +1,17 @@
+--- virt-top-1.0.4.old/virt-top/virt_top.ml	2012-10-12 14:24:26.930461085 +0100
++++ virt-top-1.0.4/virt-top/virt_top.ml	2012-10-12 14:28:46.560573563 +0100
+@@ -665,11 +665,11 @@
+ 		 let domid = rd.rd_domid in
+ 		 let maplen = C.cpumaplen nr_pcpus in
+ 		 let cpu_stats = D.get_cpu_stats rd.rd_dom nr_pcpus in
+-		 let rec find_usages_from_stats = function
++		 let rec find_cpu_usages = function
+ 		   | ("cpu_time", D.TypedFieldUInt64 usages) :: _ -> usages
+-		   | _ :: params -> find_usages_from_stats params
++		   | _ :: params -> find_cpu_usages params
+ 		   | [] -> 0L in
+-		 let pcpu_usages = Array.map find_usages_from_stats cpu_stats in
++		 let pcpu_usages = Array.map find_cpu_usages cpu_stats in
+ 		 let maxinfo = rd.rd_info.D.nr_virt_cpu in
+ 		 let nr_vcpus, vcpu_infos, cpumaps =
+ 		   D.get_vcpus rd.rd_dom maxinfo maplen in

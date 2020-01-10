@@ -1,0 +1,34 @@
+From aeec0e0229cee5e5572cdec6602a7dc4b7d5c321 Mon Sep 17 00:00:00 2001
+From: "Richard W.M. Jones" <rjones@redhat.com>
+Date: Thu, 6 Jan 2011 10:16:12 +0000
+Subject: [PATCH] man page: Update copyright date and link to web pages.
+
+---
+ virt-top/virt-top.pod | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/virt-top/virt-top.pod b/virt-top/virt-top.pod
+index feda3aa..b368215 100755
+--- a/virt-top/virt-top.pod
++++ b/virt-top/virt-top.pod
+@@ -375,7 +375,7 @@ L<top(1)>,
+ L<virsh(1)>,
+ L<http://www.libvirt.org/ocaml/>,
+ L<http://www.libvirt.org/>,
+-L<http://et.redhat.com/~rjones/>,
++L<http://people.redhat.com/~rjones/>,
+ L<http://caml.inria.fr/>
+ 
+ =head1 AUTHORS
+@@ -384,7 +384,7 @@ Richard W.M. Jones <rjones @ redhat . com>
+ 
+ =head1 COPYRIGHT
+ 
+-(C) Copyright 2007 Red Hat Inc., Richard W.M. Jones
++(C) Copyright 2007-2011 Red Hat Inc., Richard W.M. Jones
+ http://libvirt.org/
+ 
+ This program is free software; you can redistribute it and/or modify
+-- 
+1.7.11.4
+

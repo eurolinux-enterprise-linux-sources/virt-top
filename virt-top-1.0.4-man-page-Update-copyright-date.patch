@@ -1,0 +1,25 @@
+From 5e12409e8c353602f6606394e16d6e5308931f89 Mon Sep 17 00:00:00 2001
+From: "Richard W.M. Jones" <rjones@redhat.com>
+Date: Fri, 28 Sep 2012 15:41:19 +0100
+Subject: [PATCH] man page: Update copyright date.
+
+---
+ virt-top/virt-top.pod | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/virt-top/virt-top.pod b/virt-top/virt-top.pod
+index 63aa30a..2b0eee1 100755
+--- a/virt-top/virt-top.pod
++++ b/virt-top/virt-top.pod
+@@ -453,7 +453,7 @@ Richard W.M. Jones <rjones @ redhat . com>
+ 
+ =head1 COPYRIGHT
+ 
+-(C) Copyright 2007-2011 Red Hat Inc., Richard W.M. Jones
++(C) Copyright 2007-2012 Red Hat Inc., Richard W.M. Jones
+ http://libvirt.org/
+ 
+ This program is free software; you can redistribute it and/or modify
+-- 
+1.7.11.4
+
