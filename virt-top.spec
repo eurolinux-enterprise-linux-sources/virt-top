@@ -3,7 +3,7 @@
 
 Name:           virt-top
 Version:        1.0.4
-Release:        3.1%{?dist}
+Release:        3.8%{?dist}
 Summary:        Utility like top(1) for displaying virtualization stats
 
 Group:          Development/Libraries
@@ -16,7 +16,20 @@ ExcludeArch:    sparc64 s390 s390x
 Patch0:         virt-top-1.0.3-bogus-zh_CN-plurals.patch
 Patch1:         virt-top-1.0.4-bogus-ja-plurals.patch
 
-BuildRequires:  ocaml >= 3.10.2
+Patch2:         virt-top-1.0.4-man-page-memory-option-shows-total-guest-memory-RHBZ.patch
+Patch3:         virt-top-1.0.4-Remove-references-to-xm-xentop-manual-pages-RHBZ-648.patch
+Patch4:         virt-top-1.0.4-Document-background-noise-of-RX-packets-from-bridges.patch
+Patch5:         virt-top-1.0.4-Fix-virt-top-end-time-option-when-TZ-UTC-RHBZ-637964.patch
+Patch6:         virt-top-1.0.4-Fix-pad-function-to-work-for-negative-widths-RHBZ-63.patch
+Patch7:         virt-top-1.0.4-main-Record-and-print-full-exception-stack-traces.patch
+Patch8:         virt-top-1.0.4-Change-order-of-return-values-from-getyx-fixes-displ.patch
+Patch9:         virt-top-1.0.4-Obey-virt-top-end-time-down-to-near-millisecond-accu.patch
+Patch10:        virt-top-1.0.4-Add-stream-flag.patch
+Patch11:        virt-top-1.0.4-Add-block-in-bytes-option.patch
+Patch12:        virt-top-1.0.4-Fix-end-time-option-with-absolute-times.patch
+Patch13:        virt-top-1.0.4-docs-Fix-documentation-for-virt-top-c-option.patch
+
+BuildRequires:  ocaml >= 3.11.0
 BuildRequires:  ocaml-ocamldoc
 BuildRequires:  ocaml-findlib-devel
 # Need the ncurses / ncursesw (--enable-widec) fix.
@@ -30,9 +43,6 @@ BuildRequires:  ocaml-libvirt-devel
 # Tortuous list of BRs for gettext.
 BuildRequires:  ocaml-gettext-devel >= 0.3.3
 BuildRequires:  ocaml-fileutils-devel
-%ifnarch ppc64
-BuildRequires:  ocaml-camomile-data
-%endif
 # For msgfmt:
 BuildRequires:  gettext
 
@@ -40,6 +50,9 @@ BuildRequires:  gettext
 BuildRequires:  libvirt-devel
 BuildRequires:  perl
 BuildRequires:  gawk
+
+# For execstack:
+BuildRequires:  prelink
 
 
 %description
@@ -55,6 +68,18 @@ different virtualization systems.
 %setup -q
 %patch0 -p1
 %patch1 -p1
+%patch2 -p1
+%patch3 -p1
+%patch4 -p1
+%patch5 -p1
+%patch6 -p1
+%patch7 -p1
+%patch8 -p1
+%patch9 -p1
+%patch10 -p1
+%patch11 -p1
+%patch12 -p1
+%patch13 -p1
 chmod -x COPYING
 
 
@@ -88,6 +113,13 @@ make -C po install PODIR="$RPM_BUILD_ROOT%{_datadir}/locale"
 mkdir -p $RPM_BUILD_ROOT%{_mandir}/man1
 install -m 0644 virt-top/virt-top.1 $RPM_BUILD_ROOT%{_mandir}/man1
 
+# Clear executable stack flag.  Really this is a bug in the OCaml
+# compiler on ppc, but it's simpler to just clear the bit here for all
+# architectures.
+# https://bugzilla.redhat.com/show_bug.cgi?id=605124
+# http://caml.inria.fr/mantis/view.php?id=4564
+execstack -c $RPM_BUILD_ROOT%{_bindir}/virt-top
+
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -101,6 +133,36 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Mar  8 2011 Richard W.M. Jones <rjones@redhat.com> - 1.0.4-3.8
+- Fix --end-time option with absolute times.
+  resolves: RHBZ#680344
+- Fix documentation for virt-top -c option.
+  resolves: RHBZ#676979
+
+* Fri Feb  4 2011 Richard W.M. Jones <rjones@redhat.com> - 1.0.4-3.7
+- Add --stream and --block-in-bytes options from Fujitsu.
+  resolves: RHBZ#643893
+
+* Wed Jan 26 2011 Richard W.M. Jones <rjones@redhat.com> - 1.0.4-3.6
+- Obey virt-top --end-time down to near millisecond accuracy
+  resolves: RHBZ#637964
+
+* Mon Jan 17 2011 Richard W.M. Jones <rjones@redhat.com> - 1.0.4-3.5
+- Clear executable stack bit on PPC (RHBZ#605124).
+
+* Thu Jan  6 2011 Richard W.M. Jones <rjones@redhat.com> - 1.0.4-3.4
+- Fix location of historical %%CPU on virt-top (RHBZ#629500).
+
+* Thu Jan  6 2011 Richard W.M. Jones <rjones@redhat.com> - 1.0.4-3.3
+- Drop ocaml-camomile* dependency (RHBZ#661783).
+- Document background noise of RX packets from bridges (RHBZ#647987).
+- Fix pad function to work for negative widths (RHBZ#634435).
+- Fix virt-top --end-time option when TZ<>UTC (RHBZ#637964).
+- Document that memory option shows total guest memory (RHBZ#647991).
+- Remove references to xm/xentop manual pages (RHBZ#648186).
+- Record and print full exception stack traces to aid debugging.
+  This also requires OCaml 3.11.0 so update BR.
+
 * Mon Jan 11 2010 Richard W.M. Jones <rjones@redhat.com> - 1.0.4-3.1
 - Import package from Fedora Rawhide.
 

@@ -1,0 +1,229 @@
+diff -ur virt-top-1.0.4.old/virt-top/virt_top.ml virt-top-1.0.4/virt-top/virt_top.ml
+--- virt-top-1.0.4.old/virt-top/virt_top.ml	2011-02-04 18:34:47.596960505 +0000
++++ virt-top-1.0.4/virt-top/virt_top.ml	2011-02-04 18:33:52.763950754 +0000
+@@ -134,6 +134,7 @@
+ let init_file = ref DefaultInitFile
+ let script_mode = ref false
+ let stream_mode = ref false
++let block_in_bytes = ref false
+ 
+ (* Tuple of never-changing data returned by start_up function. *)
+ type setup =
+@@ -202,6 +203,8 @@
+       " " ^ s_ "Run from a script (no user interface)";
+     "--stream", Arg.Set stream_mode,
+       " " ^ s_"dump output to stdout (no userinterface)";
++    "--block-in-bytes", Arg.Set block_in_bytes,
++      " " ^ s_"show block device load in bytes rather than reqs";
+   ] in
+   let anon_fun str =
+     raise (Arg.Bad (sprintf (f_ "%s: unknown parameter") str)) in
+@@ -233,6 +236,7 @@
+       | _, "secure", b -> secure_mode := bool_of_string b
+       | _, "script", b -> script_mode := bool_of_string b
+       | _, "stream", b -> stream_mode := bool_of_string b
++      | _, "block-in-bytes", b -> block_in_bytes := bool_of_string b
+       | _, "end-time", t -> set_end_time t
+       | _, "overwrite-init-file", "false" -> no_init_file ()
+       | lineno, key, _ ->
+@@ -391,6 +395,12 @@
+   (* The following are since the last slice, or None if cannot be calc'd: *)
+   rd_block_rd_reqs : int64 option;      (* Number of block device read rqs. *)
+   rd_block_wr_reqs : int64 option;      (* Number of block device write rqs. *)
++  rd_block_rd_bytes : int64 option;   (* Number of bytes block device read *)
++  rd_block_wr_bytes : int64 option;   (* Number of bytes block device write *)
++  (* _info fields includes the number considering --block_in_bytes option *)
++  rd_block_rd_info : int64 option;    (* Block device read info for user *)
++  rd_block_wr_info : int64 option;    (* Block device read info for user *)
++
+   rd_net_rx_bytes : int64 option;	(* Number of bytes received. *)
+   rd_net_tx_bytes : int64 option;	(* Number of bytes transmitted. *)
+ }
+@@ -491,6 +501,8 @@
+ 		      rd_prev_interface_stats = prev_interface_stats;
+ 		      rd_cpu_time = 0.; rd_percent_cpu = 0.;
+ 		      rd_block_rd_reqs = None; rd_block_wr_reqs = None;
++                      rd_block_rd_bytes = None; rd_block_wr_bytes = None;
++                      rd_block_rd_info = None; rd_block_wr_info = None;
+ 		      rd_net_rx_bytes = None; rd_net_tx_bytes = None;
+ 		    })
+ 	    with
+@@ -552,10 +564,23 @@
+ 	      block_stats.D.rd_req -^ prev_block_stats.D.rd_req in
+ 	    let write_reqs =
+ 	      block_stats.D.wr_req -^ prev_block_stats.D.wr_req in
++            let read_bytes =
++              block_stats.D.rd_bytes -^ prev_block_stats.D.rd_bytes in
++            let write_bytes =
++              block_stats.D.wr_bytes -^ prev_block_stats.D.wr_bytes in
+ 
+ 	    let rd = { rd with
+ 			 rd_block_rd_reqs = Some read_reqs;
+-			 rd_block_wr_reqs = Some write_reqs } in
++			 rd_block_wr_reqs = Some write_reqs;
++                         rd_block_rd_bytes = Some read_bytes;
++                         rd_block_wr_bytes = Some write_bytes;
++            } in
++            let rd = { rd with
++                         rd_block_rd_info = if !block_in_bytes then
++                         rd.rd_block_rd_bytes else rd.rd_block_rd_reqs;
++                         rd_block_wr_info = if !block_in_bytes then
++                         rd.rd_block_wr_bytes else rd.rd_block_wr_reqs;
++            } in
+ 	    name, Active rd
+ 	(* For all other domains we can't calculate it, so leave as None. *)
+ 	| rd -> rd
+@@ -838,8 +863,12 @@
+ 
+ 	 (* Print domains. *)
+ 	 attron A.reverse;
+-	 mvaddstr header_lineno 0
+-	   (pad cols "   ID S RDRQ WRRQ RXBY TXBY %CPU %MEM    TIME   NAME");
++         let header_string = if !block_in_bytes
++         then "   ID S RDBY WRBY RXBY TXBY %CPU %MEM    TIME   NAME"
++         else "   ID S RDRQ WRRQ RXBY TXBY %CPU %MEM    TIME   NAME"
++         in
++	   mvaddstr header_lineno 0
++	    (pad cols header_string);
+ 	 attroff A.reverse;
+ 
+ 	 let rec loop lineno = function
+@@ -847,8 +876,8 @@
+ 	   | (name, Active rd) :: doms ->
+ 	       if lineno < lines then (
+ 		 let state = show_state rd.rd_info.D.state in
+-		 let rd_req = Show.int64_option rd.rd_block_rd_reqs in
+-		 let wr_req = Show.int64_option rd.rd_block_wr_reqs in
++		 let rd_req = Show.int64_option rd.rd_block_rd_info in
++		 let wr_req = Show.int64_option rd.rd_block_wr_info in
+ 		 let rx_bytes = Show.int64_option rd.rd_net_rx_bytes in
+ 		 let tx_bytes = Show.int64_option rd.rd_net_tx_bytes in
+ 		 let percent_cpu = Show.percent rd.rd_percent_cpu in
+@@ -1192,7 +1221,10 @@
+       (* These fields are repeated for each domain: *)
+     [ "Domain ID"; "Domain name"; ] @
+     (if !csv_cpu then [ "CPU (ns)"; "%CPU"; ] else []) @
+-    (if !csv_block then [ "Block RDRQ"; "Block WRRQ"; ] else []) @
++    (if !csv_block && not !block_in_bytes
++       then [ "Block RDRQ"; "Block WRRQ"; ] else []) @
++    (if !csv_block && !block_in_bytes
++       then [ "Block RDBY"; "Block WRBY"; ] else []) @
+     (if !csv_net then [ "Net RXBY"; "Net TXBY" ] else [])
+   )
+ 
+@@ -1247,8 +1279,8 @@
+ 	   string_of_float rd.rd_cpu_time; string_of_float rd.rd_percent_cpu
+ 	 ] else []) @
+ 	(if !csv_block then [
+-	   string_of_int64_option rd.rd_block_rd_reqs;
+-	   string_of_int64_option rd.rd_block_wr_reqs;
++	   string_of_int64_option rd.rd_block_rd_info;
++	   string_of_int64_option rd.rd_block_wr_info;
+ 	 ] else []) @
+ 	(if !csv_net then [
+ 	   string_of_int64_option rd.rd_net_rx_bytes;
+@@ -1272,7 +1304,10 @@
+     printable_time hostname node_info.C.model node_info.C.cpus nr_pcpus
+     node_info.C.mhz (node_info.C.memory /^ 1024L);
+   (* dump domain information one by one *)
+-  printf "   ID S RDRQ WRRQ RXBY TXBY %%CPU %%MEM   TIME    NAME\n";
++   let rd, wr = if !block_in_bytes then "RDBY", "WRBY" else "RDRQ", "WRRQ"
++   in
++     printf "   ID S %s %s RXBY TXBY %%CPU %%MEM   TIME    NAME\n" rd wr;
++
+   (* sort by ID *)
+   let doms =
+     let compare =
+@@ -1289,10 +1324,10 @@
+   let dump_domain = fun name rd
+   -> begin
+     let state = show_state rd.rd_info.D.state in
+-    let rd_req = if rd.rd_block_rd_reqs = None then "   0"
+-    else Show.int64_option rd.rd_block_rd_reqs in
+-    let wr_req = if rd.rd_block_wr_reqs = None then "   0"
+-    else Show.int64_option rd.rd_block_wr_reqs in
++         let rd_req = if rd.rd_block_rd_info = None then "   0"
++                      else Show.int64_option rd.rd_block_rd_info in
++         let wr_req = if rd.rd_block_wr_info = None then "   0"
++                      else Show.int64_option rd.rd_block_wr_info in
+     let rx_bytes = if rd.rd_net_rx_bytes = None then "   0"
+     else Show.int64_option rd.rd_net_rx_bytes in
+     let tx_bytes = if rd.rd_net_tx_bytes = None then "   0"
+@@ -1390,6 +1425,7 @@
+     else if k = Char.code '2' then toggle_net_display ()
+     else if k = Char.code '3' then toggle_block_display ()
+     else if k = Char.code 'W' then write_init_file ()
++    else if k = Char.code 'B' then toggle_block_in_bytes_mode ()
+     else unknown_command k
+   )
+ 
+@@ -1535,6 +1571,12 @@
+     | TaskDisplay | NetDisplay -> BlockDisplay
+     | BlockDisplay -> TaskDisplay
+ 
++and toggle_block_in_bytes_mode () =      (* key B *)
++  block_in_bytes :=
++    match !block_in_bytes with
++    | false -> true
++    | true  -> false
++
+ (* Write an init file. *)
+ and write_init_file () =
+   match !init_file with
+@@ -1657,6 +1699,7 @@
+   key "q"        (s_ "Quit");
+   key "d s"      (s_ "Set update interval");
+   key "h"        (s_ "Help");
++  key "B"        (s_"toggle block info req/bytes");
+ 
+   (* Sort order. *)
+   ignore (get_lineno ());
+diff -ur virt-top-1.0.4.old/virt-top/virt-top.pod virt-top-1.0.4/virt-top/virt-top.pod
+--- virt-top-1.0.4.old/virt-top/virt-top.pod	2011-02-04 18:34:47.597960337 +0000
++++ virt-top-1.0.4/virt-top/virt-top.pod	2011-02-04 18:33:05.305957614 +0000
+@@ -158,6 +158,10 @@
+ Stream mode.  All output is sent to stdout.  This can be used from
+ shell scripts etc.  There is no user interface.
+ 
++=item B<--block-in-bytes>
++
++Show I/O statistics in Bytes. Default is shown in the number of Requests.
++
+ =item B<--end-time time>
+ 
+ The program will exit at the I<time> given.
+@@ -227,6 +231,10 @@
+ 
+ Change the delay between screen updates.
+ 
++=item I<B>
++
++Toggle Block I/O statistics so they are shown in either bytes or requests.
++
+ =item I<0> (number 0)
+ 
+ Show the normal list of domains display.
+@@ -358,6 +366,10 @@
+ 
+ Sets stream mode.
+ 
++=item B<block-in-bytes> I<true|false>
++
++Show block device statistics in bytes.
++
+ =item B<end-time> I<time>
+ 
+ Set the time at which the program exits.  See above for the
+@@ -377,6 +389,12 @@
+ 
+ =head1 NOTES
+ 
++=head2 Block I/O statistics
++
++This I/O value is the amount of I/O since the previous iteration
++of virt-top. To calculate speed of I/O, you should divide
++the number by delay secs.
++
+ =head2 NETWORK RX BYTES AND PACKETS
+ 
+ Libvirt/virt-top has no way to know that a packet transmitted to a

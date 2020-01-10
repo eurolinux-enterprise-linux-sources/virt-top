@@ -1,0 +1,59 @@
+From dc0e217390132f7e76a4d9c0a8a81a9556d19081 Mon Sep 17 00:00:00 2001
+From: Richard W.M. Jones <rjones@redhat.com>
+Date: Tue, 8 Mar 2011 11:21:49 +0000
+Subject: [PATCH] Fix --end-time option with absolute times.
+
+Assume the user enters a local time, and convert it to UTC.
+
+This also adds some clarifying comments to the relative time
+code (but doesn't change that code).
+
+Note that the obsolete Calendar1 code is *not* updated by this change.
+---
+ virt-top/virt_top_calendar2.ml |   26 ++++++++++++++++++--------
+ 1 files changed, 18 insertions(+), 8 deletions(-)
+
+diff --git a/virt-top/virt_top_calendar2.ml b/virt-top/virt_top_calendar2.ml
+index cb0ebec..cc82eec 100755
+--- a/virt-top/virt_top_calendar2.ml
++++ b/virt-top/virt_top_calendar2.ml
+@@ -38,18 +38,28 @@ fun time ->
+ 	  Calendar.Period.make 0 0 0 hh mm ss
+ 	) else				(* +seconds *)
+ 	  Calendar.Period.second (int_of_string period) in
+-      (* Add it as an offset from the current time. *)
++      (* Add it as an offset from the current time.
++       *
++       * Note that the default for the Calendar library is to return
++       * Calendar.now in the UTC time zone, which is in fact what we
++       * need below.
++       *)
+       Calendar.add (Calendar.now ()) period
+     ) else (
+-      if String.contains time '-' then	(* YYYY-MM-DD HH:MM:SS *)
+-	Printer.CalendarPrinter.from_string time
+-      else (				(* HH:MM:SS *)
+-	let time = Printer.TimePrinter.from_string time in
+-	Calendar.create (Date.today ()) time
+-      )
++      let cal =
++        if String.contains time '-' then (* YYYY-MM-DD HH:MM:SS *)
++	  Printer.CalendarPrinter.from_string time
++        else (				 (* HH:MM:SS *)
++	  let time = Printer.TimePrinter.from_string time in
++	  Calendar.create (Date.today ()) time
++        ) in
++      (* Assume the user has entered a local time.  Convert it to
++       * UTC time zone which is what we need below.  (RHBZ#680344)
++       *)
++      Calendar.convert cal Time_Zone.Local Time_Zone.UTC
+     ) in
+ 
+-  eprintf "end time: %s\n" (Printer.CalendarPrinter.to_string cal);
++  eprintf "end time (UTC): %s\n" (Printer.CalendarPrinter.to_string cal);
+ 
+   (* Convert to a time_t.  Note that we compare this against
+    * Unix.gettimeofday in the main module, so this must be returned as
+-- 
+1.7.1
+

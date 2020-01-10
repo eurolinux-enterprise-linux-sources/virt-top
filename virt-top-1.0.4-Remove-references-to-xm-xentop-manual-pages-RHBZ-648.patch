@@ -1,0 +1,27 @@
+From e6a2a06e0ed016109f0adf728ac13fca22823d0b Mon Sep 17 00:00:00 2001
+From: Richard W.M. Jones <rjones@redhat.com>
+Date: Thu, 6 Jan 2011 10:14:51 +0000
+Subject: [PATCH] Remove references to xm/xentop manual pages (RHBZ#648186).
+
+These Xen tools are obsolete since virsh/virt-top works across
+all hypervisors.
+---
+ virt-top/virt-top.pod |    2 --
+ 1 files changed, 0 insertions(+), 2 deletions(-)
+
+diff --git a/virt-top/virt-top.pod b/virt-top/virt-top.pod
+index 283185d..feda3aa 100755
+--- a/virt-top/virt-top.pod
++++ b/virt-top/virt-top.pod
+@@ -373,8 +373,6 @@ This is a bug and this behaviour may change in the future.
+ 
+ L<top(1)>,
+ L<virsh(1)>,
+-L<xm(1)>,
+-L<xentop(1)>,
+ L<http://www.libvirt.org/ocaml/>,
+ L<http://www.libvirt.org/>,
+ L<http://et.redhat.com/~rjones/>,
+-- 
+1.7.3.4
+

@@ -1,0 +1,46 @@
+From d3def2ccdd0e1f25f4966eee8cfc4396861e4fb4 Mon Sep 17 00:00:00 2001
+From: Richard W.M. Jones <rjones@redhat.com>
+Date: Thu, 6 Jan 2011 12:40:29 +0000
+Subject: [PATCH] main: Record and print full exception stack traces.
+
+This turns on stack trace recording unconditionally (the same
+effect as if OCAMLRUNPARAM=b was always supplied), and also prints
+stack traces to the log file if there is an exception.
+
+See also:
+http://caml.inria.fr/pub/docs/manual-ocaml/libref/Printexc.html
+
+Note that this requires OCaml >= 3.11.0.
+---
+ README                    |    5 ++++-
+ virt-top/virt_top_main.ml |    3 +++
+ 2 files changed, 7 insertions(+), 1 deletions(-)
+
+diff --git a/virt-top/virt_top_main.ml b/virt-top/virt_top_main.ml
+index 4e1c5b7..4e5c07b 100644
+--- a/virt-top/virt_top_main.ml
++++ b/virt-top/virt_top_main.ml
+@@ -34,6 +34,7 @@ let error =
+   let ((_, _, script_mode, _, _, _, _) as setup) = start_up () in
+ 
+   try
++    Printexc.record_backtrace true;
+     main_loop setup;
+     if not script_mode then endwin ();
+     false
+@@ -41,10 +42,12 @@ let error =
+   | Libvirt.Virterror err ->
+       if not script_mode then endwin ();
+       prerr_endline (Libvirt.Virterror.to_string err);
++      Printexc.print_backtrace stderr;
+       true
+   | exn ->
+       if not script_mode then endwin ();
+       prerr_endline (s_ "Error" ^ ": " ^ Printexc.to_string exn);
++      Printexc.print_backtrace stderr;
+       true
+ 
+ let () =
+-- 
+1.7.3.4
+

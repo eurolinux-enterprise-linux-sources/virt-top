@@ -1,0 +1,54 @@
+diff -ur virt-top-1.0.4.old/virt-top/virt_top.ml virt-top-1.0.4/virt-top/virt_top.ml
+--- virt-top-1.0.4.old/virt-top/virt_top.ml	2011-03-08 11:42:30.394275055 +0000
++++ virt-top-1.0.4/virt-top/virt_top.ml	2011-03-08 11:43:47.502265762 +0000
+@@ -170,9 +170,9 @@
+     "-b", Arg.Set batch_mode,
+       " " ^ s_ "Batch mode";
+     "-c", Arg.String set_uri,
+-      "uri " ^ s_ "Connect to URI (default: Xen)";
++      "uri " ^ s_"Connect to libvirt URI";
+     "--connect", Arg.String set_uri,
+-      "uri " ^ s_ "Connect to URI (default: Xen)";
++      "uri " ^ s_"Connect to libvirt URI";
+     "--csv", Arg.String set_csv,
+       "file " ^ s_ "Log statistics to CSV file";
+     "--no-csv-cpu", Arg.Clear csv_cpu,
+@@ -265,7 +265,7 @@
+ 	prerr_endline (Libvirt.Virterror.to_string err);
+ 	(* If non-root and no explicit connection URI, print a warning. *)
+ 	if Unix.geteuid () <> 0 && name = None then (
+-	  print_endline (s_ "NB: If you want to monitor a local Xen hypervisor, you usually need to be root");
++	  print_endline (s_ "NB: If you want to monitor a local hypervisor, you usually need to be root");
+ 	);
+ 	exit 1 in
+ 
+diff -ur virt-top-1.0.4.old/virt-top/virt-top.pod virt-top-1.0.4/virt-top/virt-top.pod
+--- virt-top-1.0.4.old/virt-top/virt-top.pod	2011-03-08 11:42:30.429260385 +0000
++++ virt-top-1.0.4/virt-top/virt-top.pod	2011-03-08 11:43:03.442276596 +0000
+@@ -43,16 +43,21 @@
+ 
+ =item B<-c uri> or B<--connect uri>
+ 
+-Connect to URI given.  The default is to connect to the Xen
+-hypervisor.
++Connect to the libvirt URI given.
+ 
+ To connect to QEMU/KVM you would normally do I<-c qemu:///system>
+ 
++To connect to Xen on the same host, do I<-c xen:///>
++
+ To connect to libvirtd on a remote machine you would normally do
+-I<-c xen://host/>
++I<-c qemu://host/system>
++
++If this option is not given then virt-top connects by default
++to whatever is the default hypervisor for libvirt, although
++this can be overridden by setting environment variables.
+ 
+-Full details on connection URIs is available at
+-L<http://libvirt.org/uri.html>
++See the libvirt documentation at L<http://libvirt.org/uri.html>
++for further information.
+ 
+ =item B<-d delay>
+ 

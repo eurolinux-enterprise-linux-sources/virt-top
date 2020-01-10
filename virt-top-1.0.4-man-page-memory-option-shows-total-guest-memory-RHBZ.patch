@@ -1,0 +1,35 @@
+From d24e39fd4ba4dee11674a319bb6bbdd5d2be995c Mon Sep 17 00:00:00 2001
+From: Richard W.M. Jones <rjones@redhat.com>
+Date: Thu, 6 Jan 2011 10:18:43 +0000
+Subject: [PATCH] man page: memory option shows total guest memory (RHBZ#647991).
+
+---
+ virt-top/virt-top.pod |    5 +++--
+ 1 files changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/virt-top/virt-top.pod b/virt-top/virt-top.pod
+index b368215..2588805 100755
+--- a/virt-top/virt-top.pod
++++ b/virt-top/virt-top.pod
+@@ -69,7 +69,7 @@ is to run continuously.
+ 
+ Set the sort order to one of:
+ B<cpu> (sort by %CPU used),
+-B<mem> (sort by memory used),
++B<mem> (sort by total memory),
+ B<time> (sort by total time),
+ B<id> (sort by domain ID),
+ B<name> (sort by domain name),
+@@ -252,7 +252,8 @@ Sort by %CPU.
+ 
+ =item I<M>
+ 
+-Sort by memory.
++Sort by total memory.  Note that this shows the total memory
++allocated to the guest, not the memory being used.
+ 
+ =item I<T>
+ 
+-- 
+1.7.3.4
+

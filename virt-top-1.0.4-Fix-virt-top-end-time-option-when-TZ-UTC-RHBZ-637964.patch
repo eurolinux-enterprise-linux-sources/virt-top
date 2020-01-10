@@ -1,0 +1,52 @@
+From 549a8eb860afd3ca7bec74c0a955b35855df0a5b Mon Sep 17 00:00:00 2001
+From: Richard W.M. Jones <rjones@redhat.com>
+Date: Thu, 6 Jan 2011 11:22:44 +0000
+Subject: [PATCH] Fix virt-top --end-time option when TZ<>UTC (RHBZ#637964).
+
+Return the end time as seconds since 1970, and don't adjust it
+for timezone.  In the main module the end time is compared against
+the result of Unix.gettimeofday, which is also seconds since 1970,
+so the comparison now works.
+
+Tested with TZ=UTC-05, TZ=UTC and TZ=UTC+05.
+
+NB: This has not been tested against ocaml-calendar 1.x, although
+that version of calendar is obsolete and no one should be using it.
+---
+ virt-top/virt_top_calendar1.ml |    7 +++++--
+ virt-top/virt_top_calendar2.ml |    7 +++++--
+ 2 files changed, 10 insertions(+), 4 deletions(-)
+
+diff --git a/virt-top/virt_top_calendar1.ml b/virt-top/virt_top_calendar1.ml
+index beac4ee..534465c 100755
+--- a/virt-top/virt_top_calendar1.ml
++++ b/virt-top/virt_top_calendar1.ml
+@@ -49,5 +49,8 @@ fun time ->
+ 
+   eprintf "end time: %s\n" (Printer.CalendarPrinter.to_string cal);
+ 
+-  (* Convert to a time_t, adjusting for the current timezone. *)
+-  fst (Unix.mktime (Calendar.to_unixtm cal))
++  (* Convert to a time_t.  Note that we compare this against
++   * Unix.gettimeofday in the main module, so this must be returned as
++   * plain seconds from 1970 with no timezone adjustment.  (RHBZ#637964)
++   *)
++  Calendar.to_unixfloat cal
+diff --git a/virt-top/virt_top_calendar2.ml b/virt-top/virt_top_calendar2.ml
+index 184f2b9..cb0ebec 100755
+--- a/virt-top/virt_top_calendar2.ml
++++ b/virt-top/virt_top_calendar2.ml
+@@ -51,5 +51,8 @@ fun time ->
+ 
+   eprintf "end time: %s\n" (Printer.CalendarPrinter.to_string cal);
+ 
+-  (* Convert to a time_t, adjusting for the current timezone. *)
+-  fst (Unix.mktime (Calendar.to_unixtm cal))
++  (* Convert to a time_t.  Note that we compare this against
++   * Unix.gettimeofday in the main module, so this must be returned as
++   * plain seconds from 1970 with no timezone adjustment.  (RHBZ#637964)
++   *)
++  Calendar.to_unixfloat cal
+-- 
+1.7.3.4
+

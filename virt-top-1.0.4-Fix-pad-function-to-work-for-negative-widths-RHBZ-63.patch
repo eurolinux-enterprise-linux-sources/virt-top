@@ -1,0 +1,46 @@
+From 0b94aeb460d42eea16bf942dd0892b8ebf63877b Mon Sep 17 00:00:00 2001
+From: Richard W.M. Jones <rjones@redhat.com>
+Date: Thu, 6 Jan 2011 12:38:24 +0000
+Subject: [PATCH] Fix pad function to work for negative widths (RHBZ#634435).
+
+The pad function is supposed to pad a string to a width.  Under some
+circumstances, the width parameter could be negative resulting in a
+call to String.sub such as:
+
+  String.sub str 0 (-1)
+
+which caused an exception to be thrown and not caught, causing
+virt-top to exit.  Fix the pad function to return an empty string if
+width <= 0 instead of throwing an exception.
+
+See also:
+https://bugzilla.redhat.com/show_bug.cgi?id=634435
+---
+ virt-top/virt_top_utils.ml |   11 +++++++----
+ 1 files changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/virt-top/virt_top_utils.ml b/virt-top/virt_top_utils.ml
+index f858e0e..c5dc97d 100644
+--- a/virt-top/virt_top_utils.ml
++++ b/virt-top/virt_top_utils.ml
+@@ -109,10 +109,13 @@ let read_config_file filename =
+ 
+ (* Pad a string to the full width with spaces.  If too long, truncate. *)
+ let pad width str =
+-  let n = String.length str in
+-  if n = width then str
+-  else if n > width then String.sub str 0 width
+-  else (* if n < width then *) str ^ String.make (width-n) ' '
++  if width <= 0 then ""
++  else (
++    let n = String.length str in
++    if n = width then str
++    else if n > width then String.sub str 0 width
++    else (* if n < width then *) str ^ String.make (width-n) ' '
++  )
+ 
+ module Show = struct
+   (* Show a percentage in 4 chars. *)
+-- 
+1.7.3.4
+
