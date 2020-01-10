@@ -1,0 +1,71 @@
+diff -ur virt-top-1.0.4.old/virt-top/virt_top.ml virt-top-1.0.4/virt-top/virt_top.ml
+--- virt-top-1.0.4.old/virt-top/virt_top.ml	2011-08-11 13:49:01.485494282 +0100
++++ virt-top-1.0.4/virt-top/virt_top.ml	2011-08-11 13:50:29.066492956 +0100
+@@ -129,6 +129,7 @@
+ let debug_file = ref ""
+ let csv_enabled = ref false
+ let csv_cpu = ref true
++let csv_mem = ref true
+ let csv_block = ref true
+ let csv_net = ref true
+ let init_file = ref DefaultInitFile
+@@ -177,6 +178,8 @@
+       "file " ^ s_ "Log statistics to CSV file";
+     "--no-csv-cpu", Arg.Clear csv_cpu,
+       " " ^ s_ "Disable CPU stats in CSV";
++    "--no-csv-mem", Arg.Clear csv_mem,
++      " " ^ s_"Disable memory stats in CSV";
+     "--no-csv-block", Arg.Clear csv_block,
+       " " ^ s_ "Disable block device stats in CSV";
+     "--no-csv-net", Arg.Clear csv_net,
+@@ -230,6 +233,7 @@
+       | _, "debug", filename -> debug_file := filename
+       | _, "csv", filename -> set_csv filename
+       | _, "csv-cpu", b -> csv_cpu := bool_of_string b
++      | _, "csv-mem", b -> csv_mem := bool_of_string b
+       | _, "csv-block", b -> csv_block := bool_of_string b
+       | _, "csv-net", b -> csv_net := bool_of_string b
+       | _, "batch", b -> batch_mode := bool_of_string b
+@@ -1227,6 +1231,7 @@
+       (* These fields are repeated for each domain: *)
+     [ "Domain ID"; "Domain name"; ] @
+     (if !csv_cpu then [ "CPU (ns)"; "%CPU"; ] else []) @
++    (if !csv_mem then [ "Mem (bytes)"; "%Mem";] else []) @
+     (if !csv_block && not !block_in_bytes
+        then [ "Block RDRQ"; "Block WRRQ"; ] else []) @
+     (if !csv_block && !block_in_bytes
+@@ -1284,6 +1289,9 @@
+ 	(if !csv_cpu then [
+ 	   string_of_float rd.rd_cpu_time; string_of_float rd.rd_percent_cpu
+ 	 ] else []) @
++        (if !csv_mem then [
++            Int64.to_string rd.rd_mem_bytes; Int64.to_string rd.rd_mem_percent
++         ] else []) @
+ 	(if !csv_block then [
+ 	   string_of_int64_option rd.rd_block_rd_info;
+ 	   string_of_int64_option rd.rd_block_wr_info;
+diff -ur virt-top-1.0.4.old/virt-top/virt-top.pod virt-top-1.0.4/virt-top/virt-top.pod
+--- virt-top-1.0.4.old/virt-top/virt-top.pod	2011-08-11 13:49:01.478492906 +0100
++++ virt-top-1.0.4/virt-top/virt-top.pod	2011-08-11 13:49:31.035492660 +0100
+@@ -127,6 +127,10 @@
+ 
+ Disable domain CPU stats in CSV output.
+ 
++=item B<--no-csv-mem>
++
++Disable domain memory stats in CSV output.
++
+ =item B<--no-csv-block>
+ 
+ Disable domain block device stats in CSV output.
+@@ -347,6 +351,10 @@
+ 
+ Enable or disable domain CPU stats in CSV output.
+ 
++=item B<csv-mem> I<true|false>
++
++Enable or disable domain memory stats in CSV output.
++
+ =item B<csv-block> I<true|false>
+ 
+ Enable or disable domain block device stats in CSV output.

@@ -1,0 +1,29 @@
+From aa468af096862f53f8c95181ae35cedc68571156 Mon Sep 17 00:00:00 2001
+From: "Richard W.M. Jones" <rjones@redhat.com>
+Date: Fri, 12 Aug 2011 11:54:41 +0100
+Subject: [PATCH] Fix ordering of csv_mode and stream_mode in tuple.
+
+Note that this bug could have been avoided by using a struct instead
+of a tuple here.
+
+This updates commit daf79631f3eff904ba89297148c4125ac7dfee39.
+---
+ virt-top/virt_top_main.ml |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/virt-top/virt_top_main.ml b/virt-top/virt_top_main.ml
+index 44dbf93..bd9b575 100644
+--- a/virt-top/virt_top_main.ml
++++ b/virt-top/virt_top_main.ml
+@@ -31,7 +31,7 @@ open Virt_top
+  * the program under --debug ...).
+  *)
+ let error =
+-  let ((_, _, script_mode, stream_mode, _, _, _, _) as setup) = start_up () in
++  let ((_, _, script_mode, _, stream_mode, _, _, _) as setup) = start_up () in
+ 
+   try
+     Printexc.record_backtrace true;
+-- 
+1.7.6
+

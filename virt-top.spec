@@ -3,13 +3,17 @@
 
 Name:           virt-top
 Version:        1.0.4
-Release:        3.8%{?dist}
+Release:        3.11%{?dist}
 Summary:        Utility like top(1) for displaying virtualization stats
 
 Group:          Development/Libraries
 License:        GPLv2+
 URL:            http://et.redhat.com/~rjones/virt-top/
 Source0:        http://et.redhat.com/~rjones/virt-top/files/%{name}-%{version}.tar.gz
+
+# Post-process output of CSV file (RHBZ#665817).
+Source1:        processcsv.py
+
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 ExcludeArch:    sparc64 s390 s390x
 
@@ -28,6 +32,12 @@ Patch10:        virt-top-1.0.4-Add-stream-flag.patch
 Patch11:        virt-top-1.0.4-Add-block-in-bytes-option.patch
 Patch12:        virt-top-1.0.4-Fix-end-time-option-with-absolute-times.patch
 Patch13:        virt-top-1.0.4-docs-Fix-documentation-for-virt-top-c-option.patch
+Patch14:        virt-top-1.0.4-docs-Explain-how-to-debug-libvirt-initialization-pro.patch
+Patch15:        virt-top-1.0.4-Record-memory-statistics-information-to-rd-object.patch
+Patch16:        virt-top-1.0.4-add-memory-stats-to-csv-mode.patch
+Patch17:        virt-top-1.0.4-processcsv-documentation.patch
+Patch18:        virt-top-1.0.4-Fix-ordering-of-csv_mode-and-stream_mode-in-tuple.patch
+
 
 BuildRequires:  ocaml >= 3.11.0
 BuildRequires:  ocaml-ocamldoc
@@ -80,6 +90,11 @@ different virtualization systems.
 %patch11 -p1
 %patch12 -p1
 %patch13 -p1
+%patch14 -p1
+%patch15 -p1
+%patch16 -p1
+%patch17 -p1
+%patch18 -p1
 chmod -x COPYING
 
 
@@ -120,6 +135,12 @@ install -m 0644 virt-top/virt-top.1 $RPM_BUILD_ROOT%{_mandir}/man1
 # http://caml.inria.fr/mantis/view.php?id=4564
 execstack -c $RPM_BUILD_ROOT%{_bindir}/virt-top
 
+# Install processcsv.py.
+install -m 0755 %{SOURCE1} $RPM_BUILD_ROOT%{_bindir}
+pushd $RPM_BUILD_ROOT%{_mandir}/man1
+ln virt-top.1 processcsv.py.1
+popd
+
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -128,11 +149,25 @@ rm -rf $RPM_BUILD_ROOT
 %files -f %{name}.lang
 %defattr(-,root,root,-)
 %doc COPYING README TODO.virt-top ChangeLog
+%{_bindir}/processcsv.py
 %{_bindir}/virt-top
+%{_mandir}/man1/processcsv.py.1*
 %{_mandir}/man1/virt-top.1*
 
 
 %changelog
+* Fri Aug 12 2011 Richard W.M. Jones <rjones@redhat.com> - 1.0.4-3.11
+- Fix ordering of csv_mode and stream_mode in tuple.
+  resolves: RHBZ#730208
+
+* Thu Aug 11 2011 Richard W.M. Jones <rjones@redhat.com> - 1.0.4-3.10
+- docs: Explain how to debug libvirt initialization problems
+  resolves: RHBZ#680031
+- Show domain memory information in csv mode.
+  resolves: RHBZ#680027
+- Add processcsv.py file and documentation.
+  resolves: RHBZ#665817
+
 * Tue Mar  8 2011 Richard W.M. Jones <rjones@redhat.com> - 1.0.4-3.8
 - Fix --end-time option with absolute times.
   resolves: RHBZ#680344
