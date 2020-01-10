@@ -3,7 +3,7 @@
 
 Name:           virt-top
 Version:        1.0.4
-Release:        3.11%{?dist}
+Release:        3.13%{?dist}
 Summary:        Utility like top(1) for displaying virtualization stats
 
 Group:          Development/Libraries
@@ -37,6 +37,7 @@ Patch15:        virt-top-1.0.4-Record-memory-statistics-information-to-rd-object
 Patch16:        virt-top-1.0.4-add-memory-stats-to-csv-mode.patch
 Patch17:        virt-top-1.0.4-processcsv-documentation.patch
 Patch18:        virt-top-1.0.4-Fix-ordering-of-csv_mode-and-stream_mode-in-tuple.patch
+Patch19:        virt-top-1.0.4-fix-virt-top-1.patch
 
 
 BuildRequires:  ocaml >= 3.11.0
@@ -48,7 +49,8 @@ BuildRequires:  ocaml-extlib-devel
 BuildRequires:  ocaml-xml-light-devel
 BuildRequires:  ocaml-csv-devel
 BuildRequires:  ocaml-calendar-devel
-BuildRequires:  ocaml-libvirt-devel
+# Needs binding to virDomainGetCPUStats (RHBZ#737728).
+BuildRequires:  ocaml-libvirt-devel >= 0.6.1.0-6.4
 
 # Tortuous list of BRs for gettext.
 BuildRequires:  ocaml-gettext-devel >= 0.3.3
@@ -95,6 +97,7 @@ different virtualization systems.
 %patch16 -p1
 %patch17 -p1
 %patch18 -p1
+%patch19 -p1
 chmod -x COPYING
 
 
@@ -156,6 +159,14 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri Mar 23 2012 Richard W.M. Jones <rjones@redhat.com> - 1.0.4-3.13
+- Rebuild against fixed virDomainGetCPUStats binding in ocaml-libvirt.
+  resolves: RHBZ#737728
+
+* Tue Mar  6 2012 Richard W.M. Jones <rjones@redhat.com> - 1.0.4-3.12
+- Fix virt-top -1 to use virDomainGetCPUStats.
+  resolves: RHBZ#737728
+
 * Fri Aug 12 2011 Richard W.M. Jones <rjones@redhat.com> - 1.0.4-3.11
 - Fix ordering of csv_mode and stream_mode in tuple.
   resolves: RHBZ#730208
