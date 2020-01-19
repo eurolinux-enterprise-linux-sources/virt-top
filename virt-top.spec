@@ -3,7 +3,7 @@
 
 Name:           virt-top
 Version:        1.0.8
-Release:        6%{?dist}
+Release:        7%{?dist}
 Summary:        Utility like top(1) for displaying virtualization stats
 
 License:        GPLv2+
@@ -136,6 +136,9 @@ install -m 0644 processcsv.py.1 $RPM_BUILD_ROOT%{_mandir}/man1/
 
 
 %changelog
+* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 1.0.8-7
+- Mass rebuild 2013-12-27
+
 * Mon Jul 29 2013 Richard W.M. Jones <rjones@redhat.com> - 1.0.8-6
 - Include processcsv.py script and man page, but on RHEL only
   (RHBZ#665817, RHBZ#912020)
