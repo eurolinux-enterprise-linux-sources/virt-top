@@ -3,14 +3,14 @@
 
 Name:           virt-top
 Version:        1.0.8
-Release:        23%{?dist}
+Release:        24%{?dist}
 Summary:        Utility like top(1) for displaying virtualization stats
 License:        GPLv2+
 
 URL:            http://people.redhat.com/~rjones/virt-top/
 Source0:        http://people.redhat.com/~rjones/virt-top/files/%{name}-%{version}.tar.gz
 
-ExcludeArch:    s390 s390x
+ExcludeArch:    s390
 
 %if 0%{?rhel} >= 6
 # Post-process output of CSV file (RHBZ#665817, RHBZ#912020).
@@ -178,6 +178,10 @@ install -m 0644 processcsv.py.1 $RPM_BUILD_ROOT%{_mandir}/man1/
 
 
 %changelog
+* Fri Oct 20 2017 Richard W.M. Jones <rjones@redhat.com> - 1.0.8-24
+- Enable s390x architecture
+  resolves: rhbz#1483875
+
 * Wed Mar 29 2017 Richard W.M. Jones <rjones@redhat.com> - 1.0.8-23
 - Use libvirt virConnectGetAllDomainStats API for better performance, accuracy
 - Include all changes from Fedora Rawhide
