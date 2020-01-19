@@ -3,7 +3,7 @@
 
 Name:           virt-top
 Version:        1.0.8
-Release:        7%{?dist}
+Release:        8%{?dist}
 Summary:        Utility like top(1) for displaying virtualization stats
 
 License:        GPLv2+
@@ -27,6 +27,8 @@ BuildRequires:  ocaml-ocamldoc
 BuildRequires:  ocaml-findlib-devel
 # Need the ncurses / ncursesw (--enable-widec) fix.
 BuildRequires:  ocaml-curses-devel >= 1.0.3-7
+# Still doesn't pull in libcursesw.so unless we do:
+BuildRequires:  ncurses-devel
 BuildRequires:  ocaml-extlib-devel
 BuildRequires:  ocaml-xml-light-devel
 BuildRequires:  ocaml-csv-devel
@@ -136,6 +138,10 @@ install -m 0644 processcsv.py.1 $RPM_BUILD_ROOT%{_mandir}/man1/
 
 
 %changelog
+* Wed Aug 20 2014 Richard W.M. Jones <rjones@redhat.com> - 1.0.8-8
+- Explicitly BR ncurses-devel to pull in libcursesw.so.
+- Resolves: rhbz#1125708
+
 * Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 1.0.8-7
 - Mass rebuild 2013-12-27
 
