@@ -3,14 +3,12 @@
 
 Name:           virt-top
 Version:        1.0.8
-Release:        24%{?dist}
+Release:        6%{?dist}
 Summary:        Utility like top(1) for displaying virtualization stats
-License:        GPLv2+
 
+License:        GPLv2+
 URL:            http://people.redhat.com/~rjones/virt-top/
 Source0:        http://people.redhat.com/~rjones/virt-top/files/%{name}-%{version}.tar.gz
-
-ExcludeArch:    s390
 
 %if 0%{?rhel} >= 6
 # Post-process output of CSV file (RHBZ#665817, RHBZ#912020).
@@ -20,45 +18,21 @@ Source2:        processcsv.py.pod
 Patch0:         virt-top-1.0.4-processcsv-documentation.patch
 %endif
 
-# All upstream patches since 1.0.8.
-Patch0001:      0001-Disable-warning-about-immutable-strings-for-OCaml-4..patch
-Patch0002:      0002-Move-upstream-translations-from-Tranifex-to-Zanata.patch
-Patch0003:      0003-Update-translations-from-Zanata.patch
-Patch0004:      0004-build-Add-g-flag-to-ocamlopt.patch
-Patch0005:      0005-Rename-source-directory-and-files.patch
-Patch0006:      0006-Enable-same-warnings-as-libguestfs.patch
-Patch0007:      0007-Remove-x-executable-permission-on-several-source-fil.patch
-Patch0008:      0008-Refresh-HACKING-file.patch
-Patch0009:      0009-Fix-po-POTFILES-for-new-location-of-source-files.patch
-Patch0010:      0010-Update-PO-files.patch
-Patch0011:      0011-Remove-support-for-OCaml-Calendar-v1.patch
-Patch0012:      0012-src-Fix-some-comments-which-referred-to-the-old-file.patch
-Patch0013:      0013-Split-up-huge-Top-module-into-smaller-modules.patch
-Patch0014:      0014-Move-block_in_bytes-entirely-to-the-presentation-lay.patch
-Patch0015:      0015-Remove-unused-variable-is_calendar2.patch
-Patch0016:      0016-Use-virConnectGetAllDomainStats-API-to-collect-domai.patch
-Patch0017:      0017-chmod-x-COPYING-files.patch
-
 # Update configure for aarch64 (bz #926701)
-Patch9999:      virt-top-aarch64.patch
-
-# The patches touch configure.ac:
-BuildRequires:  autoconf
+Patch1: virt-top-aarch64.patch
+ExcludeArch:    sparc64 s390 s390x
 
 BuildRequires:  ocaml >= 3.10.2
 BuildRequires:  ocaml-ocamldoc
 BuildRequires:  ocaml-findlib-devel
 # Need the ncurses / ncursesw (--enable-widec) fix.
 BuildRequires:  ocaml-curses-devel >= 1.0.3-7
-# Still doesn't pull in libcursesw.so unless we do:
-BuildRequires:  ncurses-devel
 BuildRequires:  ocaml-extlib-devel
 BuildRequires:  ocaml-xml-light-devel
 BuildRequires:  ocaml-csv-devel
 BuildRequires:  ocaml-calendar-devel
-# Need support for virDomainGetCPUStats (fixed in 0.6.1.2)
-# and virConnectGetAllDomainStats (post-0.6.1.4).
-BuildRequires:  ocaml-libvirt-devel >= 0.6.1.4-15
+# Need support for virDomainGetCPUStats (fixed in 0.6.1.2).
+BuildRequires:  ocaml-libvirt-devel >= 0.6.1.2-5
 
 # Tortuous list of BRs for gettext.
 BuildRequires:  ocaml-gettext-devel >= 0.3.3
@@ -72,7 +46,7 @@ BuildRequires:  perl
 BuildRequires:  perl(Pod::Perldoc)
 BuildRequires:  gawk
 
-%ifarch ppc
+%ifarch ppc ppc64
 BuildRequires:  /usr/bin/execstack
 %endif
 
@@ -93,27 +67,10 @@ different virtualization systems.
 %patch0 -p1
 %endif
 
-%patch0001 -p1
-%patch0002 -p1
-%patch0003 -p1
-%patch0004 -p1
-%patch0005 -p1
-%patch0006 -p1
-%patch0007 -p1
-%patch0008 -p1
-%patch0009 -p1
-%patch0010 -p1
-%patch0011 -p1
-%patch0012 -p1
-%patch0013 -p1
-%patch0014 -p1
-%patch0015 -p1
-%patch0016 -p1
-%patch0017 -p1
-
 # Update configure for aarch64 (bz #926701)
-%patch9999 -p1
-autoconf
+%patch1 -p1
+
+chmod -x COPYING
 
 
 %build
@@ -121,15 +78,15 @@ autoconf
 make all
 %if %opt
 make opt
-strip src/virt-top.opt
+strip virt-top/virt-top.opt
 %endif
 
 # Build translations.
 make -C po
 
 # Force rebuild of man page.
-rm -f src/virt-top.1
-make -C src virt-top.1
+rm -f virt-top/virt-top.1
+make -C virt-top virt-top.1
 
 %if 0%{?rhel} >= 6
 # Build processcsv.py.1.
@@ -148,11 +105,12 @@ make -C po install PODIR="$RPM_BUILD_ROOT%{_datadir}/locale"
 
 # Install virt-top manpage by hand for now.
 mkdir -p $RPM_BUILD_ROOT%{_mandir}/man1
-install -m 0644 src/virt-top.1 $RPM_BUILD_ROOT%{_mandir}/man1
+install -m 0644 virt-top/virt-top.1 $RPM_BUILD_ROOT%{_mandir}/man1
 
-%ifarch ppc
-# Clear executable stack flag.  This is a bug in the OCaml
-# compiler on ppc.
+%ifarch ppc ppc64
+# Clear executable stack flag.  Really this is a bug in the OCaml
+# compiler on ppc, but it's simpler to just clear the bit here for all
+# architectures.
 # https://bugzilla.redhat.com/show_bug.cgi?id=605124
 # http://caml.inria.fr/mantis/view.php?id=4564
 execstack -c $RPM_BUILD_ROOT%{_bindir}/virt-top
@@ -178,22 +136,6 @@ install -m 0644 processcsv.py.1 $RPM_BUILD_ROOT%{_mandir}/man1/
 
 
 %changelog
-* Fri Oct 20 2017 Richard W.M. Jones <rjones@redhat.com> - 1.0.8-24
-- Enable s390x architecture
-  resolves: rhbz#1483875
-
-* Wed Mar 29 2017 Richard W.M. Jones <rjones@redhat.com> - 1.0.8-23
-- Use libvirt virConnectGetAllDomainStats API for better performance, accuracy
-- Include all changes from Fedora Rawhide
-  resolves: rhbz#1422795
-
-* Wed Aug 20 2014 Richard W.M. Jones <rjones@redhat.com> - 1.0.8-8
-- Explicitly BR ncurses-devel to pull in libcursesw.so.
-- Resolves: rhbz#1125708
-
-* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 1.0.8-7
-- Mass rebuild 2013-12-27
-
 * Mon Jul 29 2013 Richard W.M. Jones <rjones@redhat.com> - 1.0.8-6
 - Include processcsv.py script and man page, but on RHEL only
   (RHBZ#665817, RHBZ#912020)
